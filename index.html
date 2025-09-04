@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login / Register</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#4e54c8,#8f94fb);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .card {
+    background: #fff;
+    color: #000;
+    width: 320px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .card h2 { margin-bottom: 15px; }
+  .card input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: none;
+    border-bottom: 1px solid #aaa;
+    font-size: 15px;
+    outline: none;
+  }
+  .card button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #eee;
+    color: #000;
+    transition: 0.3s;
+  }
+  .card button:hover { background: #ddd; }
+  .card p { margin-top: 12px; font-size: 14px; }
+  .card p a { color: #007bff; text-decoration: none; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+
+<!-- Register Card -->
+<div class="card" id="registerCard">
+  <h2>Register</h2>
+  <input id="regName" type="text" placeholder="Name">
+  <input id="regEmail" type="email" placeholder="Email">
+  <input id="regPass" type="password" placeholder="Password">
+  <input id="regCPass" type="password" placeholder="Confirm Password">
+  <button onclick="register()">Sign Up</button>
+  <p>Have an Account ? <a href="#" onclick="showLogin()">Login Here</a></p>
+</div>
+
+<!-- Login Card -->
+<div class="card hidden" id="loginCard">
+  <h2>Login</h2>
+  <input id="logEmail" type="email" placeholder="Email">
+  <input id="logPass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p>Don’t have Account ? <a href="#" onclick="showRegister()">Register Here</a></p>
+</div>
+
+<script>
+const registerCard=document.getElementById("registerCard");
+const loginCard=document.getElementById("loginCard");
+
+function showLogin(){
+  registerCard.classList.add("hidden");
+  loginCard.classList.remove("hidden");
+}
+function showRegister(){
+  loginCard.classList.add("hidden");
+  registerCard.classList.remove("hidden");
+}
+function register(){
+  let n=document.getElementById("regName").value;
+  let e=document.getElementById("regEmail").value;
+  let p=document.getElementById("regPass").value;
+  let cp=document.getElementById("regCPass").value;
+  if(!n||!e||!p||!cp) return alert("Please fill all fields");
+  if(p!==cp) return alert("Passwords do not match");
+  alert("Registered successfully ✅ Now Login");
+  showLogin();
+}
+function login(){
+  let e=document.getElementById("logEmail").value;
+  let p=document.getElementById("logPass").value;
+  if(!e||!p) return alert("Please fill email and password");
+  alert("Login Successful 🎉");
+  // redirect to spin page
+  window.location.href = "game.html"; 
+}
+</script>
+</body>
+</html>

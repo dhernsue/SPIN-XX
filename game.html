@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Spin Wheel — Casino Style</title>
+<style>
+  :root{ --bg:#111318; --text:#fff; --green:#21e05e; --red:#ff2e57; --blue:#1e90ff; }
+  body{margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); text-align:center;}
+  .wallet{background:#222; padding:10px 20px; font-size:20px; font-weight:700; color:gold;
+    display:flex; justify-content:center; align-items:center; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,0.6);}
+  .wallet span{color:#fff;}
+  .stage{position:relative; margin:20px auto; width:min(90vw,420px); aspect-ratio:1/1;}
+  canvas{width:100%; height:100%;}
+  .chip.winGlow{ box-shadow:0 0 25px 8px yellow, 0 0 40px 15px white inset; transform:scale(1.15); transition:all 0.4s ease; }
+  .spinBtn{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:140px; height:140px; border-radius:50%;
+    border:none; font-size:24px; font-weight:800; cursor:pointer; background:radial-gradient(circle at 30% 30%, #fff, #bbb); color:#222;
+    box-shadow:0 0 15px #000 inset, 0 6px 14px rgba(0,0,0,0.6);}
+  .timer{font-size:22px; font-weight:700; margin:10px 0; color:gold;}
+  .chips{display:flex; justify-content:center; gap:20px; margin:18px 0;}
+  .chip{padding:16px 36px; border-radius:40px; font-weight:700; font-size:20px; cursor:pointer; transition:0.25s; color:#fff; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.6);}
+  .chip span.betAmount{position:absolute; bottom:-18px; font-size:14px; font-weight:700; color:gold;}
+  .green{background:radial-gradient(circle at 30% 30%, #a8ffbf, var(--green)); color:#000;}
+  .red{background:radial-gradient(circle at 30% 30%, #ff9aa8, var(--red)); color:#000;}
+  .blue{background:radial-gradient(circle at 30% 30%, #b5d8ff, var(--blue));}
+  .grid{display:grid; grid-template-columns:repeat(5,1fr); gap:16px; padding:16px; max-width:420px; margin:auto;}
+  .ball{width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:22px; margin:auto; color:#fff; border:3px solid #fff; box-shadow:0 0 12px rgba(0,0,0,0.6); position:relative; cursor:pointer; transition:0.3s;}
+  .ball.green{background:radial-gradient(circle at 30% 30%, #fff, var(--green)); color:#000;}
+  .ball.red{background:radial-gradient(circle at 30% 30%, #fff, var(--red)); color:#000;}
+  .ball.blue{background:radial-gradient(circle at 30% 30%, #fff, var(--blue));}
+  .ball span.betAmount{position:absolute; bottom:-18px; font-size:14px; font-weight:700; color:gold;}
+  .ball.winGlow{ box-shadow:0 0 25px 8px yellow, 0 0 50px 15px #fff inset; transform:scale(1.2); transition:all 0.5s ease; }
+  .history{margin:10px; font-size:18px; font-weight:600;}
+  .history span{margin:0 4px; padding:4px 8px; border-radius:6px; color:#000; font-weight:700;}
+  .betChips{display:flex; justify-content:center; gap:14px; margin:20px auto; flex-wrap:nowrap;}
+  .betChip{width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer; color:#fff; text-shadow:0 1px 2px #000;
+    border:5px solid #fff; box-shadow:0 6px 14px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,255,255,0.8); position:relative; transition:transform 0.2s;}
+  .betChip::before{content:""; position:absolute; inset:8px; border:4px dashed #fff; border-radius:50%;}
+  .betChip:hover{transform:scale(1.1);}
+  .betChip.active{transform:scale(1.15); box-shadow:0 0 25px 8px yellow, inset 0 0 12px rgba(255,255,255,0.9);}
+  .betChip:nth-child(1){background:radial-gradient(circle at 30% 30%, #fff, #1e90ff);}
+  .betChip:nth-child(2){background:radial-gradient(circle at 30% 30%, #fff, #ff2e57);}
+  .betChip:nth-child(3){background:radial-gradient(circle at 30% 30%, #fff, #21e05e);}
+  .betChip:nth-child(4){background:radial-gradient(circle at 30% 30%, #fff, gold); color:#000;}
+  .betChip:nth-child(5){background:radial-gradient(circle at 30% 30%, #fff, #7a2eff);}
+  .betChip:nth-child(6){background:radial-gradient(circle at 30% 30%, #fff, #ff8c00);}
+  .auth{display:flex; gap:8px; justify-content:center; align-items:center; margin:10px;}
+  .auth input{padding:8px 10px; border-radius:8px; border:1px solid #333; background:#1b1d25; color:#fff;}
+  .auth button{padding:8px 14px; border-radius:8px; border:0; font-weight:700; cursor:pointer;}
+</style>
+</head>
+<body>
+  <div class="wallet">💰 Wallet: <span id="wallet">0</span> INR</div>
+
+  <!-- Simple auth for demo -->
+  <div class="auth">
+    <input id="phone" placeholder="Phone" />
+    <input id="pass" type="password" placeholder="Password" />
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+    <button onclick="addMoneyPrompt()">Add ₹</button>
+  </div>
+
+  <div class="timer">⏰ <span id="timeLeft">11</span>s</div>
+
+  <div class="stage">
+    <canvas id="wheel"></canvas>
+    <button id="spinBtn" class="spinBtn" onclick="spinFromBets()">SPIN</button>
+  </div>
+
+  <div class="chips">
+    <div id="btnRed" class="chip red">Red<span class="betAmount"></span></div>
+    <div id="btnBlue" class="chip blue">Blue<span class="betAmount"></span></div>
+    <div id="btnGreen" class="chip green">Green<span class="betAmount"></span></div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div class="history">⚡ <span id="historyList"></span></div>
+
+  <div class="betChips">
+    <div class="betChip">10</div><div class="betChip">20</div><div class="betChip">50</div>
+    <div class="betChip">100</div><div class="betChip">500</div><div class="betChip">1000</div>
+  </div>
+
+  <!-- Spin sound -->
+  <audio id="spinSound" src="https://www.soundjay.com/mechanical/sounds/spin-wheel-1.mp3"></audio>
+  <!-- Razorpay -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+/* ---------- CONFIG ---------- */
+const API = "YOUR_BACKEND_PUBLIC_URL"; // जैसे https://yourapp.up.railway.app
+const RZP_KEY = "YOUR_RAZORPAY_KEY_ID"; // test key id
+
+/* ---------- STATE ---------- */
+const canvas=document.getElementById("wheel");
+const ctx=canvas.getContext("2d");
+let angle=0, spinning=false, vel=0, lastTime=0, targetAngle=0;
+let selectedBet=null, bets={}, wallet=0, bettingOpen=true;
+let authToken=null;
+
+document.getElementById("wallet").textContent=wallet;
+
+const COLORS={green:"#21e05e", red:"#ff2e57", blue:"#1e90ff"};
+const sliceColors=[COLORS.red,COLORS.green,COLORS.blue,COLORS.red,COLORS.green, COLORS.red,COLORS.blue,COLORS.green];
+const slices=sliceColors.length;
+const ballColors = { 0:"blue",5:"blue", 1:"red",3:"red",7:"red",9:"red", 2:"green",4:"green",6:"green",8:"green" };
+
+/* ---------- AUTH ---------- */
+async function register(){
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("pass").value;
+  if(!phone || !password) return alert("Phone & Password needed");
+  const r = await fetch(API+"/api/register",{ method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ phone, password })});
+  const d = await r.json();
+  if(d.ok) alert("Registered! Please login.");
+  else alert(d.error||"Register failed");
+}
+async function login(){
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("pass").value;
+  const r = await fetch(API+"/api/login",{ method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ phone, password })});
+  const d = await r.json();
+  if(d.token){
+    authToken = d.token; wallet = d.wallet||0;
+    document.getElementById("wallet").textContent = wallet;
+    alert("Logged in!");
+  } else alert(d.error || "Login failed");
+}
+
+/* ---------- WALLET/DEPOSIT ---------- */
+async function addMoneyPrompt(){
+  if(!authToken) return alert("Login first");
+  const str = prompt("Add amount (₹):", "100");
+  const amt = parseInt(str||"0",10);
+  if(!amt || amt<10) return;
+  const order = await fetch(API+"/api/deposit/create-order",{
+    method:"POST", headers:{ "Content-Type":"application/json","Authorization":"Bearer "+authToken },
+    body: JSON.stringify({ amount: amt })
+  }).then(r=>r.json());
+  if(order.error) return alert(order.error);
+
+  const options = {
+    key: RZP_KEY, amount: order.amount, currency: "INR", order_id: order.id,
+    name: "Wallet Top-up",
+    handler: async (response)=>{
+      const v = await fetch(API+"/api/deposit/verify",{
+        method:"POST", headers:{ "Content-Type":"application/json","Authorization":"Bearer "+authToken },
+        body: JSON.stringify(response)
+      }).then(r=>r.json());
+      if(v.ok){
+        const w = await fetch(API+"/api/wallet",{ headers:{ "Authorization":"Bearer "+authToken } }).then(r=>r.json());
+        wallet = w.wallet||wallet; document.getElementById("wallet").textContent=wallet;
+        alert("Wallet credited!");
+      } else alert(v.error||"Verification failed");
+    }
+  };
+  new Razorpay(options).open();
+}
+
+/* ---------- WHEEL RENDER (cosmetic) ---------- */
+function fitCanvas(){
+  let size=Math.min(canvas.parentElement.clientWidth,canvas.parentElement.clientHeight);
+  let dpr=window.devicePixelRatio||1;
+  canvas.width=size*dpr; canvas.height=size*dpr;
+  canvas.style.width=size+"px"; canvas.style.height=size+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawWheel();
+}
+function drawWheel(){
+  let s=canvas.clientWidth, r=s/2;
+  ctx.clearRect(0,0,s,s);
+  ctx.save(); ctx.translate(r,r); ctx.rotate(angle);
+  let step=2*Math.PI/slices;
+  for(let i=0;i<slices;i++){
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.arc(0,0,r*0.9,i*step,(i+1)*step);
+    ctx.fillStyle=sliceColors[i]; ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(0,0,r*0.28,0,Math.PI*2);
+  ctx.fillStyle="#fff"; ctx.fill(); ctx.restore();
+}
+function animate(ts){
+  if(!spinning) return;
+  if(!lastTime) lastTime=ts;
+  let dt=ts-lastTime; lastTime=ts;
+  angle+=vel*dt;
+  if(angle>=targetAngle){spinning=false; return;}
+  drawWheel(); requestAnimationFrame(animate);
+}
+
+/* ---------- GAME ---------- */
+let spinSelection = "red";    // default
+let spinStake     = 10;
+
+document.querySelectorAll(".betChip").forEach(ch=>{
+  ch.addEventListener("click",()=>{
+    document.querySelectorAll(".betChip").forEach(c=>c.classList.remove("active"));
+    ch.classList.add("active"); spinStake=parseInt(ch.textContent,10);
+  });
+});
+
+["btnRed","btnBlue","btnGreen"].forEach(id=>{
+  document.getElementById(id).addEventListener("click",()=>{
+    spinSelection = id==="btnRed"?"red":(id==="btnBlue"?"blue":"green");
+    // UI select count (optional): add to bets UI if you want, but result server से आएगा
+  });
+});
+
+function addHistory(digit,color){
+  const span=document.createElement("span");
+  span.textContent=digit; span.style.background = (color==="red")?COLORS.red : (color==="green"?COLORS.green:COLORS.blue);
+  document.getElementById("historyList").prepend(span);
+  if(document.getElementById("historyList").children.length>12)
+    document.getElementById("historyList").lastChild.remove();
+}
+
+function glow(color,digit){
+  document.querySelectorAll(".ball").forEach(b=>b.classList.remove("winGlow"));
+  const winBall=document.querySelectorAll(".ball")[digit];
+  if(winBall){ winBall.classList.add("winGlow"); setTimeout(()=>winBall.classList.remove("winGlow"),2500); }
+
+  ["btnRed","btnBlue","btnGreen"].forEach(id=>document.getElementById(id).classList.remove("winGlow"));
+  if(color==="red") document.getElementById("btnRed").classList.add("winGlow");
+  if(color==="blue") document.getElementById("btnBlue").classList.add("winGlow");
+  if(color==="green") document.getElementById("btnGreen").classList.add("winGlow");
+  setTimeout(()=>{
+    ["btnRed","btnBlue","btnGreen"].forEach(id=>document.getElementById(id).classList.remove("winGlow"));
+  },2500);
+}
+
+// 🔊 Spin sound + server result (unta seedha result)
+async function spinFromBets(){
+  if(!authToken) return alert("Login first");
+  try{
+    // sound
+    const snd = document.getElementById("spinSound");
+    snd.currentTime = 0; snd.play().catch(()=>{ /* mobile autoplay constraints */ });
+
+    // call server
+    const r = await fetch(API+"/api/spin",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+authToken },
+      body: JSON.stringify({ selection: spinSelection, stake: spinStake })
+    });
+    const res = await r.json();
+    if(res.error) return alert(res.error);
+
+    // cosmetic wheel spin toward color slice (not authoritative)
+    const winColor = res.win.color;
+    const step=2*Math.PI/slices;
+    const idx = sliceColors.findIndex(c => c === (winColor==="red"?COLORS.red:winColor==="green"?COLORS.green:COLORS.blue));
+    const stopAngle = (idx<0?0:idx)*step + step/2;
+    const rounds = 4;
+    targetAngle = angle + rounds*2*Math.PI + stopAngle;
+    vel = (targetAngle-angle)/1200; // quick
+    spinning = true; lastTime=0;
+    requestAnimationFrame(animate);
+
+    // update UI with real result
+    addHistory(res.win.digit, res.win.color);
+    glow(res.win.color, res.win.digit);
+
+    // wallet
+    wallet = res.wallet; document.getElementById("wallet").textContent = wallet;
+  }catch(e){
+    alert("Network error");
+  }
+}
+
+/* ---------- NUM BALLS ---------- */
+const grid=document.getElementById("grid");
+for(let i=0;i<10;i++){
+  let d=document.createElement("div");
+  d.className="ball "+ballColors[i]; d.textContent=i;
+  grid.appendChild(d);
+  // अगर number bet enable करना है:
+  d.addEventListener("click", ()=> { spinSelection = "num:"+i; alert("Selected number "+i+" | Stake ₹"+spinStake); });
+}
+
+/* ---------- TIMER (cosmetic only) ---------- */
+let time=11, timerEl=document.getElementById("timeLeft"), tInt;
+function resetTimer(){
+  time=11; timerEl.textContent=time;
+  clearInterval(tInt);
+  tInt=setInterval(()=>{
+    time--; timerEl.textContent=time;
+    if(time<=0){ clearInterval(tInt); time=11; timerEl.textContent=time; }
+  },1000);
+}
+
+/* ---------- INIT ---------- */
+function onResize(){ fitCanvas(); }
+window.addEventListener("resize", onResize);
+fitCanvas(); resetTimer();
+</script>
+</body>
+  </html>

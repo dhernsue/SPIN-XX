@@ -1,0 +1,2 @@
+# SPIN-XX
+SPIN game

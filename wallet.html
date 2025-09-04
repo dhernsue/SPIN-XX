@@ -1,21 +1,52 @@
-<script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
-<script>
-  async function pay(method) {
-    const amount = document.getElementById("amount").value;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Money</title>
+</head>
+<body style="font-family: Arial; text-align:center; padding:50px;">
 
-    // Backend call for payment session
-    const res = await fetch("http://localhost:3000/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: amount })
-    });
+  <h2>Add Money to Wallet</h2>
 
-    const data = await res.json();
-    const cashfree = new Cashfree({ mode: "PROD" });
+  <input type="number" id="amount" placeholder="Enter Amount" style="padding:10px; width:200px; font-size:16px;">
+  <br><br>
+  <button onclick="payNow()" style="padding:10px 20px; font-size:16px; cursor:pointer;">
+    Pay Now
+  </button>
 
-    cashfree.pay({
-      paymentSessionId: data.payment_session_id,
-      redirectTarget: "_self"
-    });
-  }
-</script>
+  <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
+  <script>
+    async function payNow() {
+      const amount = document.getElementById("amount").value;
+
+      if (!amount || amount <= 0) {
+        alert("Please enter a valid amount");
+        return;
+      }
+
+      // Call backend to create order
+      const res = await fetch("http://localhost:3000/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount })
+      });
+
+      const data = await res.json();
+
+      if (!data.payment_session_id) {
+        alert("Error: " + (data.error || "Unable to start payment"));
+        return;
+      }
+
+      // Start Cashfree checkout
+      const cashfree = new Cashfree({ mode: "PROD" }); // use "TEST" for sandbox
+      cashfree.pay({
+        paymentSessionId: data.payment_session_id,
+        redirectTarget: "_self"
+      });
+    }
+  </script>
+
+</body>
+</html>

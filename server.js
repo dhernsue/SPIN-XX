@@ -1,17 +1,14 @@
-// install: npm install express axios body-parser dotenv
+require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const bodyParser = require("body-parser");
-require("dotenv").config(); // .env load karega
 
 const app = express();
 app.use(bodyParser.json());
 
-// Environment variables se keys uthayenge
-const clientId = process.env.CASHFREE_CLIENT_ID;
-const clientSecret = process.env.CASHFREE_CLIENT_SECRET;
+const clientId = process.env.CLIENT_ID;
+const clientSecret = process.env.CLIENT_SECRET;
 
-// API call to create payment order
 app.post("/create-order", async (req, res) => {
   try {
     const response = await axios.post(
@@ -41,4 +38,4 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("✅ Server running on http://localhost:3000"));
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));

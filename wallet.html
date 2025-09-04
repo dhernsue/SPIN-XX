@@ -1,0 +1,21 @@
+<script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
+<script>
+  async function pay(method) {
+    const amount = document.getElementById("amount").value;
+
+    // Backend call for payment session
+    const res = await fetch("http://localhost:3000/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: amount })
+    });
+
+    const data = await res.json();
+    const cashfree = new Cashfree({ mode: "PROD" });
+
+    cashfree.pay({
+      paymentSessionId: data.payment_session_id,
+      redirectTarget: "_self"
+    });
+  }
+</script>

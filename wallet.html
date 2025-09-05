@@ -1,65 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Wallet</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #222;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 12px;
+      width: 320px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background: #21e05e;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1bc14f;
+    }
+    pre {
+      background: #000;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #0f0;
+      overflow-x: auto;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; text-align:center; padding:50px;">
+<body>
+  <h1>💰 My Wallet</h1>
 
-  <h2>Wallet</h2>
+  <!-- Deposit -->
+  <div class="card">
+    <h3>Add Money</h3>
+    <input type="number" id="depositAmount" placeholder="Enter amount (INR)" />
+    <button onclick="createOrder()">Deposit</button>
+    <pre id="depositResult"></pre>
+  </div>
 
-  <input type="number" id="amount" placeholder="Enter Amount">
-  <br><br>
-  <button onclick="deposit()">Deposit</button>
-  <button onclick="withdraw()">Withdraw</button>
+  <!-- Beneficiary -->
+  <div class="card">
+    <h3>Add Beneficiary</h3>
+    <input type="text" id="beneId" placeholder="Beneficiary ID (unique)" />
+    <input type="text" id="beneName" placeholder="Name" />
+    <input type="text" id="beneEmail" placeholder="Email" />
+    <input type="text" id="benePhone" placeholder="Phone" />
+    <input type="text" id="beneAccount" placeholder="Bank Account" />
+    <input type="text" id="beneIFSC" placeholder="IFSC" />
+    <button onclick="addBeneficiary()">Add Beneficiary</button>
+    <pre id="beneResult"></pre>
+  </div>
 
-  <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
+  <!-- Withdraw -->
+  <div class="card">
+    <h3>Withdraw</h3>
+    <input type="text" id="withdrawBeneId" placeholder="Beneficiary ID" />
+    <input type="number" id="withdrawAmount" placeholder="Enter amount (INR)" />
+    <button onclick="withdraw()">Withdraw</button>
+    <pre id="withdrawResult"></pre>
+  </div>
+
   <script>
-    async function deposit() {
-      const amount = document.getElementById("amount").value;
-      if (!amount || amount <= 0) {
-        alert("Enter valid amount");
-        return;
-      }
+    const API = "http://localhost:3000"; // apna server ka URL
 
-      const res = await fetch("http://localhost:3000/create-order", {
+    async function createOrder() {
+      const amount = document.getElementById("depositAmount").value;
+      const res = await fetch(`${API}/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount })
+        body: JSON.stringify({ amount })
       });
-
       const data = await res.json();
+      document.getElementById("depositResult").innerText = JSON.stringify(data, null, 2);
+    }
 
-      if (!data.payment_session_id) {
-        alert("Error: " + (data.error || "Unable to start payment"));
-        return;
-      }
+    async function addBeneficiary() {
+      const beneId = document.getElementById("beneId").value;
+      const name = document.getElementById("beneName").value;
+      const email = document.getElementById("beneEmail").value;
+      const phone = document.getElementById("benePhone").value;
+      const bankAccount = document.getElementById("beneAccount").value;
+      const ifsc = document.getElementById("beneIFSC").value;
 
-      const cashfree = new Cashfree({ mode: "PROD" });
-      cashfree.pay({
-        paymentSessionId: data.payment_session_id,
-        redirectTarget: "_self"
+      const res = await fetch(`${API}/add-beneficiary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ beneId, name, email, phone, bankAccount, ifsc })
       });
+      const data = await res.json();
+      document.getElementById("beneResult").innerText = JSON.stringify(data, null, 2);
     }
 
     async function withdraw() {
-      const amount = document.getElementById("amount").value;
-      if (!amount || amount <= 0) {
-        alert("Enter valid amount");
-        return;
-      }
+      const beneId = document.getElementById("withdrawBeneId").value;
+      const amount = document.getElementById("withdrawAmount").value;
 
-      const res = await fetch("http://localhost:3000/withdraw", {
+      const res = await fetch(`${API}/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount })
+        body: JSON.stringify({ beneId, amount })
       });
-
       const data = await res.json();
-      alert("Withdraw response: " + JSON.stringify(data));
+      document.getElementById("withdrawResult").innerText = JSON.stringify(data, null, 2);
     }
   </script>
-
 </body>
 </html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deposit</title>
+  <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
+</head>
+<body style="font-family: Arial; text-align:center; padding:20px;">
+
+  <h2>Deposit Money</h2>
+  <p>Select Amount:</p>
+
+  <button onclick="startPayment(100)">₹100</button>
+  <button onclick="startPayment(500)">₹500</button>
+  <button onclick="startPayment(1000)">₹1000</button>
+  <br><br>
+
+  <input type="number" id="customAmount" placeholder="Enter Custom Amount">
+  <button onclick="customDeposit()">Deposit</button>
+
+  <script>
+    async function startPayment(amount) {
+      const res = await fetch("/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount })
+      });
+
+      const data = await res.json();
+      if (data.payment_session_id) {
+        const cashfree = new Cashfree({ mode: "PROD" });
+        cashfree.pay({
+          paymentSessionId: data.payment_session_id,
+          redirectTarget: "_self"
+        });
+      } else {
+        alert("Payment error: " + data.error);
+      }
+    }
+
+    function customDeposit() {
+      const amt = document.getElementById("customAmount").value;
+      if (amt > 0) startPayment(amt);
+      else alert("Enter valid amount");
+    }
+  </script>
+
+</body>
+</html>

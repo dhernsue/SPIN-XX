@@ -4,46 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wallet</title>
-  <style>
-    body{
-      font-family: Arial, sans-serif;
-      background:#111;
-      color:#fff;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      height:100vh;
-      margin:0;
-    }
-    h2{color:gold;}
-    button{
-      padding:12px 24px;
-      margin:10px;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-      font-size:18px;
-      font-weight:bold;
-    }
-    .add{background:limegreen; color:#000;}
-    .withdraw{background:tomato; color:#fff;}
-  </style>
 </head>
-<body>
-  <h2>💰 Wallet Options</h2>
-  <button class="add" onclick="addMoney()">Add Money</button>
-  <button class="withdraw" onclick="withdrawMoney()">Withdraw</button>
+<body style="font-family: Arial; text-align:center; padding:50px;">
 
+  <h2>Wallet</h2>
+
+  <input type="number" id="amount" placeholder="Enter Amount">
+  <br><br>
+  <button onclick="deposit()">Deposit</button>
+  <button onclick="withdraw()">Withdraw</button>
+
+  <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
   <script>
-    function addMoney(){
-      alert("Add Money system connect karna hoga (Cashfree/UPI API)");
-      // Yaha backend API call karni hogi
+    async function deposit() {
+      const amount = document.getElementById("amount").value;
+      if (!amount || amount <= 0) {
+        alert("Enter valid amount");
+        return;
+      }
+
+      const res = await fetch("http://localhost:3000/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount })
+      });
+
+      const data = await res.json();
+
+      if (!data.payment_session_id) {
+        alert("Error: " + (data.error || "Unable to start payment"));
+        return;
+      }
+
+      const cashfree = new Cashfree({ mode: "PROD" });
+      cashfree.pay({
+        paymentSessionId: data.payment_session_id,
+        redirectTarget: "_self"
+      });
     }
-    function withdrawMoney(){
-      alert("Withdraw system connect karna hoga (Bank/UPI API)");
-      // Yaha backend API call karni hogi
+
+    async function withdraw() {
+      const amount = document.getElementById("amount").value;
+      if (!amount || amount <= 0) {
+        alert("Enter valid amount");
+        return;
+      }
+
+      const res = await fetch("http://localhost:3000/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount })
+      });
+
+      const data = await res.json();
+      alert("Withdraw response: " + JSON.stringify(data));
     }
   </script>
+
 </body>
 </html>

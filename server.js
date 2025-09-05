@@ -1,99 +1,50 @@
-// install: npm install express axios body-parser cors dotenv
-const express = require("express");
-const axios = require("axios");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-require("dotenv").config();
+import express from "express";
+import fetch from "node-fetch";
+import bodyParser from "body-parser";
 
 const app = express();
 app.use(bodyParser.json());
-app.use(cors());
 
-const clientId = process.env.CLIENT_ID;
-const clientSecret = process.env.CLIENT_SECRET;
+const CASHFREE_APP_ID = "1040890260e1e86d8be631d1eff0980401";
+const CASHFREE_SECRET_KEY = "cfsk_ma_prod_7976657e42bdb121b0c80dfd3bef2fa9_d0755517";
+const BASE_URL = "https://api.cashfree.com/pg/orders";
 
-// ---------------- Deposit: Create Order ----------------
+// ✅ Create Order for Deposit
 app.post("/create-order", async (req, res) => {
+  const { amount } = req.body;
   try {
-    const response = await axios.post(
-      "https://api.cashfree.com/pg/orders",
-      {
+    const response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-client-id": CASHFREE_APP_ID,
+        "x-client-secret": CASHFREE_SECRET_KEY,
+        "x-api-version": "2022-09-01"
+      },
+      body: JSON.stringify({
         order_id: "order_" + Date.now(),
-        order_amount: req.body.amount,
+        order_amount: amount,
         order_currency: "INR",
         customer_details: {
-          customer_id: "CUST123",
-          customer_email: "test@example.com",
-          customer_phone: "9999999999",
-        },
-      },
-      {
-        headers: {
-          "x-client-id": clientId,
-          "x-client-secret": clientSecret,
-          "x-api-version": "2022-09-01",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: error.response?.data || error.message });
+          customer_id: "cust_" + Date.now(),
+          customer_email: "demo@example.com",
+          customer_phone: "9999999999"
+        }
+      })
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.json({ error: err.message });
   }
 });
 
-// ---------------- Add Beneficiary ----------------
-app.post("/add-beneficiary", async (req, res) => {
-  try {
-    const response = await axios.post(
-      "https://payout-api.cashfree.com/payout/v1/addBeneficiary",
-      {
-        beneId: req.body.beneId,
-        name: req.body.name,
-        email: req.body.email,
-        phone: req.body.phone,
-        bankAccount: req.body.bankAccount,
-        ifsc: req.body.ifsc,
-        address1: "Test address",
-      },
-      {
-        headers: {
-          "X-Client-Id": clientId,
-          "X-Client-Secret": clientSecret,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: error.response?.data || error.message });
-  }
+// ✅ Handle Withdraw Request (manual for now)
+app.post("/withdraw-request", (req, res) => {
+  const { upi, amount } = req.body;
+  // Yahan tum DB me save karo aur manually payout karo Cashfree Dashboard se
+  res.json({ success: true, msg: "Withdraw request saved" });
 });
 
-// ---------------- Withdraw ----------------
-app.post("/withdraw", async (req, res) => {
-  try {
-    const response = await axios.post(
-      "https://payout-api.cashfree.com/payout/v1/requestTransfer",
-      {
-        beneId: req.body.beneId,
-        amount: req.body.amount,
-        transferId: "txn_" + Date.now(),
-      },
-      {
-        headers: {
-          "X-Client-Id": clientId,
-          "X-Client-Secret": clientSecret,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: error.response?.data || error.message });
-  }
-});
-
-app.listen(3000, () =>
-  console.log("✅ Server running on http://localhost:3000")
-);
+app.listen(3000, () => console.log("Server running on port 3000"));

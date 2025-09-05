@@ -3,50 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Money</title>
+  <title>Wallet</title>
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#111;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      margin:0;
+    }
+    h2{color:gold;}
+    button{
+      padding:12px 24px;
+      margin:10px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:18px;
+      font-weight:bold;
+    }
+    .add{background:limegreen; color:#000;}
+    .withdraw{background:tomato; color:#fff;}
+  </style>
 </head>
-<body style="font-family: Arial; text-align:center; padding:50px;">
+<body>
+  <h2>💰 Wallet Options</h2>
+  <button class="add" onclick="addMoney()">Add Money</button>
+  <button class="withdraw" onclick="withdrawMoney()">Withdraw</button>
 
-  <h2>Add Money to Wallet</h2>
-
-  <input type="number" id="amount" placeholder="Enter Amount" style="padding:10px; width:200px; font-size:16px;">
-  <br><br>
-  <button onclick="payNow()" style="padding:10px 20px; font-size:16px; cursor:pointer;">
-    Pay Now
-  </button>
-
-  <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
   <script>
-    async function payNow() {
-      const amount = document.getElementById("amount").value;
-
-      if (!amount || amount <= 0) {
-        alert("Please enter a valid amount");
-        return;
-      }
-
-      // Call backend to create order
-      const res = await fetch("http://localhost:3000/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount })
-      });
-
-      const data = await res.json();
-
-      if (!data.payment_session_id) {
-        alert("Error: " + (data.error || "Unable to start payment"));
-        return;
-      }
-
-      // Start Cashfree checkout
-      const cashfree = new Cashfree({ mode: "PROD" }); // use "TEST" for sandbox
-      cashfree.pay({
-        paymentSessionId: data.payment_session_id,
-        redirectTarget: "_self"
-      });
+    function addMoney(){
+      alert("Add Money system connect karna hoga (Cashfree/UPI API)");
+      // Yaha backend API call karni hogi
+    }
+    function withdrawMoney(){
+      alert("Withdraw system connect karna hoga (Bank/UPI API)");
+      // Yaha backend API call karni hogi
     }
   </script>
-
 </body>
 </html>

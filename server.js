@@ -24,16 +24,16 @@ app.post("/create-order", async (req, res) => {
         customer_details: {
           customer_id: "CUST123",
           customer_email: "test@example.com",
-          customer_phone: "9999999999",
-        },
+          customer_phone: "9999999999"
+        }
       },
       {
         headers: {
           "x-client-id": clientId,
           "x-client-secret": clientSecret,
           "x-api-version": "2022-09-01",
-          "Content-Type": "application/json",
-        },
+          "Content-Type": "application/json"
+        }
       }
     );
     res.json(response.data);
@@ -42,22 +42,50 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-// ✅ Withdraw: Payout
-app.post("/withdraw", async (req, res) => {
+// ✅ Add Beneficiary (payout ke liye zaroori)
+app.post("/add-beneficiary", async (req, res) => {
   try {
     const response = await axios.post(
-      "https://payout-api.cashfree.com/payout/v1/requestTransfer",
+      "https://payout-api.cashfree.com/payout/v1/addBeneficiary",
       {
-        beneId: "bene123", // पहले beneficiary को Cashfree में जोड़ना पड़ेगा
-        amount: req.body.amount,
-        transferId: "wd_" + Date.now(),
+        beneId: req.body.beneId, // unique id for beneficiary
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
+        bankAccount: req.body.bankAccount,
+        ifsc: req.body.ifsc,
+        address1: req.body.address1 || "India"
       },
       {
         headers: {
           "x-client-id": clientId,
           "x-client-secret": clientSecret,
-          "Content-Type": "application/json",
-        },
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ Withdraw: Payout (beneficiary ko paisa bhejne ke liye)
+app.post("/withdraw", async (req, res) => {
+  try {
+    const response = await axios.post(
+      "https://payout-api.cashfree.com/payout/v1/requestTransfer",
+      {
+        beneId: req.body.beneId, // ye wahi id hogi jo addBeneficiary se banayi
+        amount: req.body.amount,
+        transferId: "wd_" + Date.now()
+      },
+      {
+        headers: {
+          "x-client-id": clientId,
+          "x-client-secret": clientSecret,
+          "Content-Type": "application/json"
+        }
       }
     );
     res.json(response.data);

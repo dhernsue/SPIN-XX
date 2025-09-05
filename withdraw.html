@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Withdraw</title>
+</head>
+<body style="font-family: Arial; text-align:center; padding:20px;">
+
+  <h2>Withdraw Money</h2>
+
+  <input type="text" id="upi" placeholder="Enter UPI ID">
+  <br><br>
+  <input type="number" id="amount" placeholder="Enter Amount">
+  <br><br>
+  <button onclick="withdrawMoney()">Withdraw</button>
+
+  <script>
+    async function withdrawMoney() {
+      const upi = document.getElementById("upi").value;
+      const amount = document.getElementById("amount").value;
+
+      if (!upi || !amount || amount <= 0) {
+        alert("Please enter valid details");
+        return;
+      }
+
+      const res = await fetch("/withdraw-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upi: upi, amount: amount })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Withdrawal request submitted!");
+      } else {
+        alert("Error: " + data.error);
+      }
+    }
+  </script>
+
+</body>
+</html>

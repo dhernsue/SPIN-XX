@@ -12,7 +12,7 @@ app.use(cors());
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 
-// ✅ Deposit: Create Order
+// ---------------- Deposit: Create Order ----------------
 app.post("/create-order", async (req, res) => {
   try {
     const response = await axios.post(
@@ -24,73 +24,73 @@ app.post("/create-order", async (req, res) => {
         customer_details: {
           customer_id: "CUST123",
           customer_email: "test@example.com",
-          customer_phone: "9999999999"
-        }
+          customer_phone: "9999999999",
+        },
       },
       {
         headers: {
           "x-client-id": clientId,
           "x-client-secret": clientSecret,
           "x-api-version": "2022-09-01",
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ✅ Add Beneficiary (payout ke liye zaroori)
+// ---------------- Add Beneficiary ----------------
 app.post("/add-beneficiary", async (req, res) => {
   try {
     const response = await axios.post(
       "https://payout-api.cashfree.com/payout/v1/addBeneficiary",
       {
-        beneId: req.body.beneId, // unique id for beneficiary
+        beneId: req.body.beneId,
         name: req.body.name,
         email: req.body.email,
         phone: req.body.phone,
         bankAccount: req.body.bankAccount,
         ifsc: req.body.ifsc,
-        address1: req.body.address1 || "India"
+        address1: "Test address",
       },
       {
         headers: {
-          "x-client-id": clientId,
-          "x-client-secret": clientSecret,
-          "Content-Type": "application/json"
-        }
+          "X-Client-Id": clientId,
+          "X-Client-Secret": clientSecret,
+          "Content-Type": "application/json",
+        },
       }
     );
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
-// ✅ Withdraw: Payout (beneficiary ko paisa bhejne ke liye)
+// ---------------- Withdraw ----------------
 app.post("/withdraw", async (req, res) => {
   try {
     const response = await axios.post(
       "https://payout-api.cashfree.com/payout/v1/requestTransfer",
       {
-        beneId: req.body.beneId, // ye wahi id hogi jo addBeneficiary se banayi
+        beneId: req.body.beneId,
         amount: req.body.amount,
-        transferId: "wd_" + Date.now()
+        transferId: "txn_" + Date.now(),
       },
       {
         headers: {
-          "x-client-id": clientId,
-          "x-client-secret": clientSecret,
-          "Content-Type": "application/json"
-        }
+          "X-Client-Id": clientId,
+          "X-Client-Secret": clientSecret,
+          "Content-Type": "application/json",
+        },
       }
     );
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
